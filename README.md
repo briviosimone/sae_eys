@@ -1,7 +1,10 @@
 # Deep symmetric autoencoders from the EYS perspective
-This is the official repository of the paper "Deep symmetric autoencoders from the Eckart-Young-Schmidt perspective",
-which provides *(i)* a novel mathematical framework for symmetric autoencoders, *(ii)* suitable error estimates, and
-*(iii)* a brand new data-driven initialization strategy.
+This is the official repository of the paper 
+
+*S. Brivio, N. R. Franco, [Deep symmetric autoencoders from the Eckart-Young-Schmidt perspective](https://arxiv.org/abs/2506.11641) (2025)*,
+
+providing *(i)* a novel mathematical framework for symmetric autoencoders, *(ii)* suitable error estimates, and
+*(iii)* a brand-new data-driven initialization strategy.
 
 ### Installation
 We suggest to install the library dependecies in a clean conda environment, namely,
@@ -31,4 +34,15 @@ The scripts to run are contained in the main folder, whereas ```notebooks``` com
 
 ### Cite
 If the present repository and/or the original paper was useful in your research, 
-please consider citing *insert citation*.
+please consider citing 
+```
+@misc{brivio2025saeeys,
+      title={Deep Symmetric Autoencoders from the Eckart-Young-Schmidt Perspective}, 
+      author={Simone Brivio and Nicola Rares Franco},
+      year={2025},
+      eprint={2506.11641},
+      archivePrefix={arXiv},
+      primaryClass={math.NA},
+      url={https://arxiv.org/abs/2506.11641}, 
+}
+```
