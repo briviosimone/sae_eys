@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68","setuptools<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sae_eys"
+version = "0.1.0"
+dependencies = [
+    "dlroms-nicola-r-franco@git+https://github.com/NicolaRFranco/dlroms.git@782c455be728812ea92b03e72a62fdea84041b96#egg=dlroms-nicola-r-franco",
+    "tqdm==4.67.1",
+    "ipykernel==6.29.5",
+    "jupyter==1.1.1",
+    "gdown==5.2.0",
+    "pandas==2.2.3",
+    "torch==2.6.0",
+    "numpy==1.26.4",
+    "scipy==1.15.1",
+    "imageio==2.37.0",
+    "matplotlib==3.10.0",
+    "ipython==8.32.0",
+    "pytest==9.0.2",
+    "pytest-cov==7.1.0",
+    "ray[tune]==2.46.0",
+    "gmpy2==2.2.0",
+    "charset-normalizer==3.4.3",
+]
+requires-python = "==3.11.9"
+authors = [
+    {name = "Simone Brivio"},
+    {name = "Nicola R. Franco"},
+]
+description = "Deep Symmetric Autoencoders"
+readme = "README.md"
+keywords = ["autoencoders", "reduced order modeling", "SVD", "Eckart-Young-Schmidt"]
+classifiers = [
+  "Programming Language :: Python"
+]
+
+[pytest]
+minversion = 9.0
+testpaths = [
+    "tests"
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report=markdown:testcov_report.md"

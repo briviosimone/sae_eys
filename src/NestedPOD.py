@@ -1,8 +1,8 @@
-
-from .activations import BilipActivation
 from scipy.linalg import svd
-import numpy as np
 import torch 
+
+from activations import BilipActivation
+from utils import is_not_decreasing
 
 
 class NestedPOD:
@@ -27,9 +27,16 @@ class NestedPOD:
 
         # Stores the bilipactivation
         self.bilipactivation = bilipactivation 
+        self.red_dims = red_dims
+        self.n_samples = snapshots.shape[0]
+
+        # Checks
+        if is_not_decreasing(red_dims):
+            raise ValueError('red_dims = {red_dims} is not decreasing')
+
 
         # Extract hidden length
-        self.hidden_len = len(red_dims) - 1
+        self.num_levels = len(red_dims) - 1
 
         # Aux functions to compute POD
         def compute_pod_matrix(mat):
@@ -47,7 +54,7 @@ class NestedPOD:
             Vs_pod_ae = list()
             bs_pod_ae = list()
 
-            for k in range(self.hidden_len):
+            for k in range(self.num_levels):
                 latent_vector, latent_mean = center_snapshots(latent_vector)
                 bs_pod_ae.append(latent_mean.cpu().numpy())
                 Vs_pod_ae.append(compute_pod_matrix(latent_vector))
@@ -72,41 +79,13 @@ class NestedPOD:
         Returns:
             weight matrix, bias vector (as torch.tensor)
         """
+        num_basis = self.Ws[level].shape[0]
+        if proj_dim > self.Ws[level].shape[0]:
+            raise ValueError(f'Proj. dim. = {proj_dim} cannot exceed, ' \
+            f'num. basis functions = {num_basis}')
         return torch.tensor(self.Ws[level][:proj_dim]), \
                 torch.tensor(self.bs[level])
     
-
-    def bounds(self, usnap : np.array):
-        """ Obtain lower and upper bounds.
-
-        Args:
-            usnap (np.array): the snapshot matrix.
-
-        Returns:
-            lower bound, upper bound.
-        """
-
-        def Jaux(mat, proj, mean):
-            proj_err = np.mean(
-                np.sum(
-                    (mat.T - (mat.T - mean.T) @ proj.T @ proj - mean.T)**2, 
-                    axis = -1
-                )
-            )
-            return proj_err
-
-        latent_vector = usnap.T
-        ub_val = 0.
-        lb_val = 0.
-        for k in range(len(self.Ws)):
-            to_add = Jaux(latent_vector, self.Ws[k], self.bs[k].T)
-            ub_val = ub_val + self.bilipactivation.lip_invact**(2 * k) * to_add
-            lb_val = lb_val + self.bilipactivation.lip_act**(-2 * k) * to_add
-            latent_vector = self.bilipactivation.act(
-                self.Ws[k] @ (latent_vector - self.bs[k].T)
-            )
-
-        return lb_val, ub_val
 
 
         

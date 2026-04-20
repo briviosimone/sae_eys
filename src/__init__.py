@@ -1,8 +1,9 @@
 __all__ = [ 
-    "modules",
-    "training",
-    "utils",
-    "blocks",
-    "activations",
-    "NestedPOD"
+    'activations',
+    'blocks',
+    'metrics'
+    'modules',
+    'NestedPOD',
+    'training',
+    'utils',
 ]

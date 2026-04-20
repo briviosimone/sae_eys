@@ -1,7 +1,8 @@
+from abc import ABC
+from collections.abc import Iterable
+
 import numpy as np
 import torch
-from abc import ABC, abstractmethod
-from collections.abc import Iterable
 
 
 
@@ -15,9 +16,14 @@ class BilipActivation(ABC):
         """
         return self.lip_act * self.lip_invact - 1
 
-    @abstractmethod
+   
     def setup(self):
-        return
+        self.gain_act = np.sqrt(
+            2 / (self.lip_invact**(-2) + self.lip_act**2)
+        ) 
+        self.gain_invact = np.sqrt(
+            2 / (self.lip_act**(-2) + self.lip_invact**2)
+        ) 
 
 
 
@@ -33,7 +39,8 @@ class LeakyReLU(BilipActivation, ABC):
             beta (float): the positive slope (defaults to 1).
         """
         
-        assert (alpha > 0) and (beta > 0)
+        if (alpha < 0) or (beta < 0):
+            raise ValueError('Both alpha and beta should be > 0.')
         self.alpha = alpha
         self.beta = beta
         super().__init__()
@@ -43,13 +50,6 @@ class LeakyReLU(BilipActivation, ABC):
             (self.beta)**(-1) * x * (x > 0)
         self.lip_act = max(self.beta, self.alpha)
         self.lip_invact = max((1.0 / self.beta), (1.0 / self.alpha)) 
-
-
-    def setup(self):
-        """ Sets up the slope for "He normal" initialization.
-        """
-        self.he_slope = self.alpha**2 + self.beta**2
-        self.he_slope_inv = self.alpha**(-2) + self.beta**(-2)
 
 
 
@@ -65,10 +65,10 @@ class HypAct(BilipActivation, ABC):
         """
 
         Args:
-            alpha (float): the negative slope.
-            beta (float): the positive slope (defaults to 1).
+            alpha (float): the hyperbole parameter.
         """
-        assert (alpha > 0) and (alpha < np.pi / 4)
+        if (alpha < 0) or (alpha > np.pi / 4):
+            raise ValueError('Allowed values for alpha are 0 < alpha < pi / 4.')
         self.alpha = alpha
         super().__init__()
         csc = lambda x: 1 / np.sin(x)
@@ -87,17 +87,10 @@ class HypAct(BilipActivation, ABC):
         self.lip_invact = self.lip_act
 
 
-    def setup(self):
-        """ Sets up the slope for "He normal" initialization.
-        """
-        self.he_slope = (self.lip_act**2 + self.lip_act**(-2)) / 2 + 1
-        self.he_slope_inv = self.he_slope
-
-
 
 
 class BilipActivationConfig:
-    """ Utility class to be use for analysis.
+    """ Utility class to be used for analysis.
     """
 
     def __init__(

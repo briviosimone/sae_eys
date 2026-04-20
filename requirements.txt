@@ -1,6 +1,0 @@
-git+https://github.com/NicolaRFranco/dlroms.git@782c455be728812ea92b03e72a62fdea84041b96
-tqdm
-ipykernel
-jupyter
-gdown
-pandas

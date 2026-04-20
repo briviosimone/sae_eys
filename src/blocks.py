@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -12,18 +13,20 @@ class BiorthogonalPairs(nn.Module):
 
         Args:
             n (int): the number of dofs.
-            r (int): the low-rank dimension (must be < n).
+            r (int): the low-rank dimension (must be <= n).
         """
         super().__init__()
         self.orth_param = nn.utils.parametrizations.orthogonal
-        assert r < n
+        if r > n:
+            raise ValueError('The low-rank dim. should be <= num. dofs')
         d = min(r, n - r)
         self.X = nn.Linear(n, r + d, bias = False)
         self.U = nn.Linear(r, r, bias = False)
-        self.eig = nn.Parameter(torch.ones(r, ))
+        self.eig = nn.Parameter(torch.zeros(r, ))
         self.Z = nn.Linear(r, r, bias = False)
         self.Q = nn.Parameter(torch.zeros(d, r))
         self.r = r
+        self.softplus = torch.nn.Softplus(beta = np.log(2.))
 
 
     def finalize_init(self):
@@ -33,6 +36,23 @@ class BiorthogonalPairs(nn.Module):
         self.orth_param(self.X)
         self.orth_param(self.U)
         self.orth_param(self.Z)
+
+
+    @property
+    def enc_mat(self):
+        S = self.softplus(self.eig)
+        enc_mat = self.X.weight.T[:,:self.r] @ \
+            (torch.einsum('ij,j->ij', self.U.weight.T, S) @ self.Z.weight)
+        return enc_mat.T
+    
+
+    @property
+    def dec_mat(self):
+        S = self.softplus(self.eig)
+        dec_mat = self.X.weight.T[:,:self.r] @ \
+            (torch.einsum('ij,j->ij', self.U.weight.T, S**(-1)) @ \
+             self.Z.weight) + self.X.weight.T[:,self.r:] @ self.Q
+        return dec_mat
     
 
     def enc(self, x):
@@ -44,10 +64,7 @@ class BiorthogonalPairs(nn.Module):
         Returns:
             the encoded input.
         """
-        S = self.eig**2
-        enc_mat = self.X.weight.T[:,:self.r] @ \
-            (torch.einsum('ij,j->ij', self.U.weight.T, S) @ self.Z.weight)
-        return x @ enc_mat
+        return x @ self.enc_mat.T
 
 
     def dec(self, x):
@@ -59,11 +76,8 @@ class BiorthogonalPairs(nn.Module):
         Returns:
             the decoded input.
         """
-        S = self.eig**2
-        dec_mat = self.X.weight.T[:,:self.r] @ \
-            (torch.einsum('ij,j->ij', self.U.weight.T, S**(-1)) @ \
-             self.Z.weight) + self.X.weight.T[:,self.r:] @ self.Q
-        return x @ dec_mat.T
+       
+        return x @ self.dec_mat.T
 
 
 
